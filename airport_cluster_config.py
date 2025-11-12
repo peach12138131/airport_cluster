@@ -1,4 +1,3 @@
-
 import requests
 import json
 from datetime import datetime
@@ -12,51 +11,22 @@ import re
 
 
 
-airport_data = [
-    {"RANK": 1, "ICAO": "KTEB", "TAKE-OFF_VOLUME": 77001},
-    {"RANK": 2, "ICAO": "KPBI", "TAKE-OFF_VOLUME": 44170},
-    {"RANK": 3, "ICAO": "KDAL", "TAKE-OFF_VOLUME": 41132},
-    {"RANK": 4, "ICAO": "KHPN", "TAKE-OFF_VOLUME": 38655},
-    {"RANK": 5, "ICAO": "KVNY", "TAKE-OFF_VOLUME": 35249},
-    {"RANK": 6, "ICAO": "KLAS", "TAKE-OFF_VOLUME": 32937},
-    {"RANK": 7, "ICAO": "KPDK", "TAKE-OFF_VOLUME": 32289}
-]
+# airport_data = {
+#     "US": ["KTEB", "KDAL", "KPBI", "KHPN", "KVNY", "KIAD", "KLAS", "KOPF", "KPDK", "KSDL"],
+#     "CA": ["CYYZ", "CYYC", "CYUL", "CYVR", "CYWG", "CYHU", "CYEG", "CYLW", "CYQB", "CYXE"],
+#     "UK": ["EGLF", "EGGW", "EGKB", "EGSS", "EGTK", "EGWU", "EGJJ", "EGCC", "EGNX", "EGBB"]
+# }
+airport_data = {
+    "US": ["KIAD"],
+    "UK": ["EGNX", "EGBB"]
+}
+   
 
 
 
-keywords_designer_prompt="""
-Output language:English
-You are an excellent SEO optimization specialist with expertise in search engine ranking optimization. You are now tasked with conducting critical keyword research for SEO optimization. The company needs to complete a series of article clusters, and you need to extract up to 10 keywords from one article based on materials provided by the client company: Primary keywords: include airport name. Secondary keywords: or include airport code, or the city where the airport is located, or other semantic variations. Among these, 3 should be long-tail keywords, and 2 keywords should be derived from current trending topics.
-Background: Keyword research refers to the process of finding keywords to compete for rankings in search engines. The purpose is to understand the potential intent of customer searches and how they search. It also involves analyzing and comparing keywords to find the best keyword opportunities.
-
-Your service company: JETBAY is a global private jet booking platform headquartered in Singapore, with 6 branches worldwide, committed to providing excellent global service. It provides a fast, competitive and seamless booking experience, connecting over 10,000 private jets and various fleets worldwide to bring excellent service to customers.
-
-Task objective:
-Based on the provided article content, extract keyword combinations that comply with SEO best practices, ensuring perfect alignment with article intent and cluster strategy.
-
-As a professional SEO expert, you should possess the following professional qualities and steps:
-
-1: You need to have keen insight, using internet marketing or advertising operations thinking to identify the most compelling breaking news, industry dynamics and hot topics that can attract user engagement. Consider how to naturally connect these elements with your brand, then refine them into relevant keywords.
-2: You need global thinking ability, capable of systematically thinking about the entire article cluster, naturally linking main articles and sub-articles.
-3. There are logical connections and hierarchical progression between articles, covering different stages of user search intent, avoiding keyword cannibalization (internal competition), content depth progression, avoiding repetition.
-
-
-Workflow:
-Step 1: Understand all article content, identify current keypoints,
-Step 2: Use your professional knowledge to extract keywords,and summarize the data trend 
-
-                                                                                              
-JETBAY company provided materials:
-airports: {0}
-airport data : {1}
-
-
-Output: Directly output keywords for this data.
-
-
-"""
 
 keywords_designer_prompt = """
+Output language:English
 # ROLE: Senior SEO Keyword Strategist for Aviation Industry
 You are a specialized SEO expert with 10+ years of experience in travel/aviation keyword research.
 
@@ -73,22 +43,32 @@ You are a specialized SEO expert with 10+ years of experience in travel/aviation
 ## TASK OBJECTIVE
 Extract **exactly 10 keywords** from the provided article content, following this mandatory distribution:
 
-### Keyword Structure (MUST FOLLOW):
-1. **Primary Keywords (3)** - Core focus
-   - MUST include airport name/code (e.g., "ZBAA private jet charter")
-   - Format: [Airport Name/Code] + [Service Type]
-   - Example: "Beijing Capital International Airport private jet charter"
+### Keyword Distribution Framework (Flexible Guideline):
+Aim for a balanced mix across these categories, but prioritize what naturally emerges from the content:
 
-2. **Secondary Keywords (4)** - Supporting themes
-   - Semantic variations (e.g., "business aviation ZBAA", "charter flights Beijing")
-   - City-based alternatives (e.g., "Beijing airport private jet")
-   - Service-adjacent terms (e.g., "VIP terminal Beijing", "jet charter rates ZBAA")
+1. **Location-Specific Keywords (3-4 recommended)**
+   - Incorporate airport names, codes, or city identifiers
+   - Natural format variations welcomed:
+     * private jet from [airport name]
+     * private jet charter [airport name]
+     * [airport name] private jet
+     * [airport code] private jet flights
+     * fly private to [city name]
+     * [city] airport business aviation
+   
+2. **Service & Context Keywords (3-4 recommended)**
+   - Service variations and semantic alternatives
+   - Route-based combinations
+   - User intent-driven phrases
+   - Industry terminology that adds specificity
 
-3. **Long-Tail Keywords (3)** - Specific user queries
-   - Must be 5+ words
-   - Include route/aircraft/price specifics
-   - Example: "How much does a private jet cost from Beijing to Shanghai"
-   - Example: "Best ultra-long-range jets for ZBAA departures"
+3. **Long-Tail Query Keywords (2-3 recommended)**
+   - Typically 5+ words
+   - Answer specific user questions or scenarios
+   - Include concrete details (routes/prices/aircraft types when relevant)
+   - Example patterns: "How much...", "Best [aircraft type] for...", "[Route] private jet cost"
+
+**Note:** These are suggested distributions. If the article content naturally supports a different balance, prioritize keyword quality and relevance over rigid category quotas.
 
 ---
 
@@ -137,91 +117,139 @@ Ensure:
 
 ---
 
-
+## CRITICAL RULES
+**Never** create generic keywords like "private jet" or "charter flights" alone
+**Always** tie keywords to specific airport/route/data mentioned in article
+**Trending keywords:** Must cite specific 2025 data/trend from article
 ---
 
+
 ## INPUT VARIABLES
-**Airport Data:** {0}
+**Airport:** {0}
 **Article Content:** {1}
 
 ---
 
-## CRITICAL RULES
-**Never** create generic keywords like "private jet" or "charter flights" alone
-**Always** tie keywords to specific airport/route/data mentioned in article
-**Output language:** English only (regardless of input language)
-**Trending keywords:** Must cite specific 2025 data/trend from article
 
-
----
 
 Directly output your keywords
 """
+
+
+
 seo_matadata="""
 Output language:English
 Role: As an SEO expert at a digital marketing agency. Your client has provided you with company name, service description, and keywords. Your task is to create title and meta description tags for their service pages. Your goal is to optimize pages for search engines and bring organic traffic to the website. When writing tags, keep in mind the company's target audience and brand guidelines.
 
-Background: Meta Title and Meta Description are some HTML meta tags in web pages that mainly help search engines understand page content and are the most important first step in SEO optimization. Search engines analyze these Meta Titles to navigate search topic keywords and rank keywords accordingly, so the quality of Meta Titles will greatly affect SEO rankings.
-
-Company Description: JETBAY is a global private jet booking platform headquartered in Singapore, with 6 branches worldwide, committed to providing excellent global service. It provides a fast, competitive and seamless booking experience, connecting over 10,000 private jets and various fleets worldwide to bring excellent service to customers. 24/7 aircraft availability, no purchase burden, extremely competitive pricing. The AI team has mastered the global private jet operations database, intelligently matching optimal flight resources, reducing empty flights, providing optimal charter solutions. JETBAY's mobile charter team has developed an AI platform deeply integrated with the database, using big data to optimize charter resources, achieving efficient, convenient, and sustainable flight experiences. Our charter service team has over 20 years of rich experience, providing top-tier, cost-effective flight solutions 24/7, ensuring customers enjoy seamless and personalized charter experiences. Our operations support team pays attention to every detail with the highest standards, ensuring your private flights are smooth and worry-free with rich industry experience and strong partnership networks.
+**JETBAY** - Global private jet booking platform
+- HQ: Singapore | 6 global branches | 10,000+ aircraft network  
+- AI-powered matching | 24/7 availability | 20+ years charter expertise
+- Target: UHNW individuals, C-suite executives, luxury travelers
 
 As an SEO optimization expert, the metadata you write should meet the following advantages:
-[
+
 ## Meta Title reference points (maximum 60 characters):
-Meta Title must ncorporate airport name, primary keyword, and brand 
-Write naturally for search engine users, avoiding excessive keyword stuffing
-Meta Title content should be specific, concise, keeping length within 60 characters
-Mention at least once the most competitive keyword, placing it at the front of the title
-Avoid repeating the same Meta Title
-Can include brand name at the end
-Try to use numbers (2025, 7 methods, 8 steps, etc.)
+- Must include: Airport name + Primary keyword + "JETBAY"
+- Add numbers when possible (2025, Top 5, etc.)
 
 ## Meta Description reference points (maximum 160 characters):
-Meta Description keyword-rich summary highlighting user intent 
-Meta Description length should be kept within 120-160 characters
-Mention the most competitive keyword 1-2 times
-Use more verbs and clear calls to action
-Try to make Meta Description appear unique in search results
-
+- Use primary keyword 1-2 times
+- Include action verbs (Book, Compare, Discover)
 
 ## HTML meta tags:
-Canonical tags, URL Slug (concise, keyword-based,Should follow a clean, descriptive format)
+- Format: lowercase-with-hyphens, keyword-focused
 
 
 ## Title tags:
-Title tags have very important impact on SEO optimization, usually used to embed keywords and long-tail keywords, so search engines know which keywords your webpage content relates to. Weight decreases by numerical order, H1 has the highest weight, H6 the lowest, and so on. 
+- H1 = highest SEO weight, must contain main keyword
+- H2/H3 = embed long-tail keywords naturally
+- Keyword density: 2-3 percent across all content
 
-## FAQ posts, based on article content to propose questions and answers:
-Focus on content layout: Titles should be concise and clear while containing keywords. Categorize based on FAQ content, questions and answers should be well organized
-Question and answer design: Questions should be targeted, answers should be detailed and specific, maintaining objectivity
-Keyword optimization strategy: Using long-tail keywords can improve article precision and attract more precise traffic, keyword density should not be too high, keeping 2%-3% is appropriate
-]
+**FAQ Section** (H2 with 2-3 questions as H3, no Q/A labels)
+- Match common search intent, avoid overly technical topics
+- Brief actionable answers, naturally integrate long-tail keywords
+- Keyword density: 2-3 percent  across titles and answers
 
-Workflow:
-1. Completely discard the article title and article headings from the original airport data; H1-H3 all need to be redesigned
-2. Read through the entire article, identify what you think can most attract readers, design titles that can satisfy reader curiosity and align with article positioning
-3. Must first design headings about the airport's basic introduction and Technical Information:
-   - Basic introduction should include: airport overview, geographical location, host city, local culture and customs, etc. (avoid too many sub-headings )
-   - Technical Information should include: IATA, ICAO, runway length, Aircraft Supported, and recent operational status
-   - Naturally integrate keywords into these headings
-4. After basic introduction, you can append headings such as route or aircraft type analysis, comparisons with other airports, localized regional content, etc., and select appropriate keywords to naturally integrate into them
-5. FAQ design also needs to revolve around hot topics or trending themes
-6. Add appropriate annotations within each Heading to describe the suggested content for that heading, and clearly mark that these are annotations, not body text
-   - For example, Technical Information can be clearly presented using bullet points rather than descriptive sentences
-   - For example, route information, common aircraft types, rankings, and other data can be introduced in simple tables for intuitive illustration
 
-Important notes:
--The Article title (H1 title) needs to be related to the airport name, embody the main theme of the article ,and must under 60 characters, and possess an artistic flair
--Note that the focus is not reporting, but naturally integrating keywords into your article headings to attract readers
--Article length should not be too long, titles should not be excessive, expect final article 1500 words, can discard some headings based on content: too low importance, too low relevance, low attractiveness, too technical
+
+## Content Creation Workflow
+
+### Step 1: Analyze Input
+- Discard original titles/headings from airport data
+- Identify most compelling angles for target audience
+- Plan keyword integration strategy
+
+### Step 2: Design Metadata
+
+**Meta Title**
+- Must include: Airport name + Primary keyword + "JETBAY"
+- Add numbers when possible (2025, Top 5, etc.)
+
+**Meta Description**
+- Use primary keyword 1-2 times
+- Include action verbs (Book, Compare, Discover)
+
+**HTML Meta tag**
+
+- Format: lowercase-with-hyphens, keyword-focused
+
+### Step 3: Design Article Structure (Target: 1500 words)
+
+**H1 Main Title** (≤60 characters, must include airport name)
+- Format examples(flexible guidance, not rigid templates): 
+    • [Airport Name]: [Topic/Benefit]
+    • [Topic] at [Airport Name/Code] ([Year])
+    • [Airport] [Region]: [Unique Positioning]
+    • [Data Element] from/at [Airport Name]
+    • [Service Type] Guide: [Airport] [Location Context]
+    • [Question Format]: [Airport Name] [Topic]
+- Prioritize clarity and searchability over creativity
+
+**Required H2 Sections:**
+### Add appropriate annotations within each Heading to describe the suggested content for that heading, and clearly mark that these are annotations, not body text
+
+1. **Airport Overview & Location**
+   - Geographic position, host city, cultural context
+   - Keep concise, limit sub-headings (2-3 H3 max)
+   [Note: Brief paragraphs, naturally integrate location keywords]
+
+2. **Technical Information**
+   - IATA/ICAO codes, runway specs, supported aircraft, operational status
+   [Note: Present as bullet list, not prose]
+
+**H2 Sections** (select 1-2 based on data quality,annotate that do not use table ):
+- Popular Routes & Flight Times (5+ routes as bullets)
+- Aircraft Type Recommendations
+- Comparison with Regional Airports
+- Local FBO Services & Amenities
+
+**Additional H2 Sections** (2-3 sections based on keywords and content)
+- Flexibly design headings that integrate target keywords naturally
+- Choose topics that align with both airport_data insights and SEO strategy
+[Note: Prioritize reader value and keyword relevance over rigid templates]
+
+**H2: FAQ** (2-3 H3 questions, no Q/A labels)
+- Match search intent, practical concerns only
+- Brief answers with keywords, 2-3% density
+
+### Step 3: Content Formatting Rules
+- Use bullets for: technical specs, routes (5+), aircraft lists, rankings
+- Omit low-value sections: too technical, low relevance, poor data
+
+### Quality Check
+- Keywords naturally integrated (not forced)
+- Focus: reader value, not reporting
+
 
 Input:
 airports: {0}
-original airport data : {1}
-keywords:{2}
+keywords:{1}
+original airport data : {2}
+
 
 Output:
-Integrate keywords into HTML meta tags based on ideas mentioned in original airport data, please output Meta Title (less than 60 characters), Meta Description (less than 160 characters), URL Slug, Titles (including H1-H3 for article content, and H2 FAQ section containing 2-3 questions and answers as H3 sections, remove Q, A identifiers)"""
+Integrate keywords into HTML meta tags , please output Meta Title (less than 60 characters), Meta Description (less than 160 characters), URL Slug, Titles (including H1-H3 for article content, and H2 FAQ section containing 2-3 questions and answers as H3 sections, remove Q, A identifiers)
+"""
 
 
 
@@ -231,31 +259,68 @@ seo_rewrite_prompt = """
 Output Language: English
 
 ## Main Task
-Completely rewrite airport data according to the provided SEO format, forming website articles with human editorial characteristics. And improve the article's readability since your article's target audience is ordinary non-professionals, and the sentence difficulty should be at a Grade 6–8 reading level that can be read fluently.
+Completely rewrite airport data and Transform raw airport data into SEO-optimized, reader-friendly web articles targeting non-professional audiences (Grade 6-8 reading level).
 
-## Workflow
-1. Carefully read and understand the core information and viewpoints in original airport data, organize scattered knowledge points into complete coherent articles.
-2. Completely discard the article title and article headings from the original airport data
-3. Follow the provided SEO format and start rewriting and expanding more content as a real human author:
-   - Use reasonable logic to connect scattered keywords, editing them into complete coherent articles
-   - The article style should lean towards commercial marketing SEO content, avoiding academic reports and encyclopedia-style professional writing
-   - Avoid using too many long complex sentences. Use simple sentences, structured data or tables , or clear bullet points for better readability and credibility.
-   - Follow the header regulations in the format and naturally integrate keywords into the article,Ensure keywords appear within the first 100 words, with an overall density of 1-1.5%, and avoid keyword stuffing.
-4. Review the article's paragraphs, sentences, and words to improve readability
-    - Reading difficulty should meet a 11-14 year old reading level for fluent reading
-    - Avoid using obscure words and reduce the frequency of multi-syllable words. Simplify or define industry terms, and add annotations or vivid explanations when terms are first encountered
-    - Sentence length should not be too long; avoid complex sentences with more than 25 words
-    - Paragraphs should not contain too many sentences; average 2-4 sentences per paragraph, with content divided into chunks for easy reading
-5. Control the main text output to 800-1500 words, FAQ Post is not counted in the main text
+## Core Requirements
 
-## Important Notes
-- Use third-person perspective or third-person narration in writing 
-- Avoid overly long sentences, use simple sentences, words, and examples to improve readability and lower the reading barrier of the article.
-- Do not mention other suppliers and airline names (if involved, you may mention airports, aircraft, and aircraft manufacturer names)
+### Content Style
+- **Tone**: Commercial marketing (not academic reports or encyclopedic)
+- **Perspective**: Third-person narration throughout
+- **Reading Level**: 11-14 years old comprehension (simple vocabulary, clear structure)
+- **Length**: 800-1500 words (excluding FAQ section)
 
+### SEO Standards
+- **Keyword Integration**: 
+  - First mention within opening 100 words
+  - Overall density: 1-1.5%
+  - Natural placement (avoid stuffing)
+- **Structure**: Follow provided SEO format exactly (headers, meta tags, URL slug)
+
+### Readability Rules
+- **Sentences**: Max 25 words | Prioritize simple sentences over complex
+- **Paragraphs**: 2-4 sentences each | Break content into scannable chunks
+- **Vocabulary**: 
+  - Avoid jargon; define technical terms on first use
+  - Reduce multi-syllable words
+  - Use concrete examples over abstract concepts
+- **Formatting**: Use bullet points and short paragraphs (not tables)
+
+## Writing Process
+
+**Step 1**: Analyze Input
+- Extract core facts and insights from airport data
+- Discard original titles/headings completely
+- Identify key information gaps to address
+
+**Step 2**: Structure Content
+- Apply SEO format (H1, H2, H3 hierarchy)
+- Organize scattered data into logical narrative flow
+- Ensure smooth transitions between sections
+
+**Step 3**: Write & Optimize
+- Draft content as a human editor (not AI-generated tone)
+- Connect keywords naturally through coherent storytelling
+- Simplify complex aviation concepts for general readers
+
+**Step 4**: Quality Check
+- Verify keyword density (1-1.5%) and placement
+- Check sentence length (≤25 words) and paragraph size (2-4 sentences)
+- Ensure Grade 6-8 reading level compliance
+- Main body length should be less than 1500 words, excluding the FAQ section
+
+## Restrictions
+-  Do NOT mention competitor names or specific airlines
+-  May reference: airports, aircraft models, manufacturers
+-  Do NOT include annotations like [Note: ...] in final output
+-  Do NOT use tables or overly technical formatting
 
 ## Output Format
-Directly output the written article, retain without any explanation or annotation. The final output should include: HTML Meta Tags (include Meta Title, Meta Description, URL Slug, Header), written article
+Complete article ready for publication including:
+1. Meta Title (≤60 characters)
+2. Meta Description (120-160 characters)
+3. URL Slug
+4. Rewrited article with H1-H3 headers
+5. FAQ section (2-3 Q&As)
 
 ## Initialization
 Please write this content as a real human website article editor.
@@ -319,7 +384,7 @@ original article:{0}
 
 
 def query_gpt_model(prompt: str, article: str, api_key: str=claude_key, base_url: str = "https://api.anthropic.com/v1", 
-                   model: str = "claude-sonnet-4-20250514", max_tokens: int = 10240, 
+                   model: str = "claude-sonnet-4-5-20250929", max_tokens: int = 10240, 
                    temperature: float = 0.0,json_schema: dict = None) -> Optional[str]:
   
     url = f"{base_url}/messages"
