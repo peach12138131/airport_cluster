@@ -83,6 +83,9 @@ def LLM_generate(text, image_paths=[], temp=None, presence_penalty=None, is_prin
 
 # # 示例调用
 if __name__ == "__main__":
+    
     print(LLM_generate(
-        'Please help me analyze the popular routes for private charter flights at Seletar Airpor (WSSL), recent patterns of takeoffs and landings, trends in popular aircraft models, and so on.',
+"""
+Detailed introduction about this route KTEB-KIAD (round trip considered as the same route), distance, flight time, applicable aircraft types, seasonal demand, optimal aircraft type, route suitability, cabin size, range, estimated one-way price list categorized by aircraft class
+""",
         llm_name='basedo-r'))
